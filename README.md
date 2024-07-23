@@ -47,13 +47,13 @@ GROUP BY 1;
 ```sql
 WITH cte_primeiro AS (
 	SELECT
-		s.customer_id,
-		m.product_name,
-		ROW_NUMBER() OVER (
-							PARTITION BY s.customer_id
-							ORDER BY s.order_date,
-									s.product_id
-							) AS item
+	s.customer_id,
+	m.product_name,
+	ROW_NUMBER() OVER (
+		PARTITION BY s.customer_id
+		ORDER BY s.order_date,
+		s.product_id
+		) AS item
 	FROM sales s
 	JOIN menu m
 		ON m.product_id = s.product_id
@@ -100,7 +100,7 @@ WITH cte_cont_pedido AS (
 cte_popular AS (
 	SELECT
 		*,
-        RANK() OVER(
+		RANK() OVER(
 					PARTITION BY customer_id
 					ORDER BY cont_pedido DESC
                     ) AS pop_rank
