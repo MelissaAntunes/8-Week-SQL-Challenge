@@ -16,7 +16,7 @@
 ```sql
 SELECT
 	s.customer_id,
-    SUM(m.price) AS total_gasto
+	SUM(m.price) AS total_gasto
 FROM sales s
 JOIN menu m
 	ON m.product_id = s.product_id
@@ -33,7 +33,7 @@ ORDER BY 1;
 ```sql
 SELECT
 	s.customer_id,
-    COUNT(DISTINCT s.order_date) AS total_dias
+	COUNT(DISTINCT s.order_date) AS total_dias
 FROM sales s
 GROUP BY 1;
 ```
@@ -47,13 +47,12 @@ GROUP BY 1;
 ```sql
 WITH cte_primeiro AS (
 	SELECT
-	s.customer_id,
-	m.product_name,
-	ROW_NUMBER() OVER (
-		PARTITION BY s.customer_id
-		ORDER BY s.order_date,
-		s.product_id
-		) AS item
+		s.customer_id,
+		m.product_name,
+		ROW_NUMBER() OVER (
+			PARTITION BY s.customer_id
+			ORDER BY s.order_date, s.product_id
+			) AS item
 	FROM sales s
 	JOIN menu m
 		ON m.product_id = s.product_id
@@ -72,7 +71,7 @@ where item = 1;
 ```sql
 SELECT
 	m.product_name,
-    COUNT(s.product_id) AS vezes_comprado
+	COUNT(s.product_id) AS vezes_comprado
 FROM sales s
 JOIN menu m
 	ON m.product_id = s.product_id
@@ -90,21 +89,21 @@ WITH cte_cont_pedido AS (
 	SELECT 
 		s.customer_id,
 		m.product_name,
-        COUNT(*) AS cont_pedido
+		COUNT(*) AS cont_pedido
 	FROM sales s 
-    JOIN menu m
+	JOIN menu m
 		ON m.product_id = s.product_id
 	GROUP BY s.customer_id, m.product_name
-    ORDER BY s.customer_id, cont_pedido DESC
+	ORDER BY s.customer_id, cont_pedido DESC
 ),
 cte_popular AS (
 	SELECT
 		*,
 		RANK() OVER(
-					PARTITION BY customer_id
-					ORDER BY cont_pedido DESC
-                    ) AS pop_rank
-	FROM cte_cont_pedido
+			PARTITION BY customer_id
+			ORDER BY cont_pedido DESC
+		) AS pop_rank
+FROM cte_cont_pedido
 )
 SELECT * 
 FROM cte_popular
@@ -127,9 +126,9 @@ WITH cte_first_item_purc AS (
 		mem.join_date,
 		m.product_name,
 		RANK() OVER(
-					PARTITION BY s.customer_id
-					ORDER BY s.order_date
-					) AS rank_first_purc
+			PARTITION BY s.customer_id
+			ORDER BY s.order_date
+		) AS rank_first_purc
 	FROM sales AS s
 	JOIN members AS mem
 		ON mem.customer_id = s.customer_id
@@ -139,7 +138,7 @@ WITH cte_first_item_purc AS (
 )
 SELECT 
 	customer_id,
-    product_name
+	product_name
 FROM cte_first_item_purc
 WHERE rank_first_purc = 1;
 ```
@@ -157,9 +156,9 @@ WITH cte_first_item_purc AS (
 		mem.join_date,
 		m.product_name,
 		RANK() OVER(
-					PARTITION BY s.customer_id
-					ORDER BY s.order_date DESC
-					) AS rank_first_purc
+			PARTITION BY s.customer_id
+			ORDER BY s.order_date DESC
+		) AS rank_first_purc
 	FROM sales AS s
 	JOIN members AS mem
 		ON mem.customer_id = s.customer_id
@@ -169,7 +168,7 @@ WITH cte_first_item_purc AS (
 )
 SELECT 
 	customer_id,
-    product_name
+	product_name
 FROM cte_first_item_purc
 WHERE rank_first_purc = 1;
 ```
@@ -184,7 +183,7 @@ WHERE rank_first_purc = 1;
 SELECT
 	s.customer_id,
 	COUNT(m.product_id) AS total_items,
-    SUM(price) AS amount_spent
+	SUM(price) AS amount_spent
 FROM sales AS s
 JOIN members AS mem
 	ON mem.customer_id = s.customer_id
@@ -203,7 +202,7 @@ ORDER BY amount_spent;
 ```sql
 SELECT 
 	customer_id,
-    SUM(CASE
+	SUM(CASE
 		WHEN product_name = "sushi" THEN price * 10 * 2
 		ELSE price * 10 END) AS points_multi
 FROM menu AS M
@@ -222,24 +221,24 @@ GROUP BY customer_id;
 WITH cte AS (
 	SELECT
 		customer_id,
-        join_date,
-        DATE_ADD(join_date, INTERVAL 6 DAY) AS first_week,
-        LAST_DAY('2021-01-31') AS last_date
+		join_date,
+		DATE_ADD(join_date, INTERVAL 6 DAY) AS first_week,
+		LAST_DAY('2021-01-31') AS last_date
 	FROM members
 )
 SELECT
 	s.customer_id,
-    SUM(CASE
-			WHEN m.product_name = 'sushi' THEN m.price * 10 * 2
-            WHEN s.order_date BETWEEN cte.join_date AND cte.first_week THEN m.price * 10 * 2
-			ELSE m.price * 10 END) AS points
-	FROM sales AS s
-    JOIN cte
-		ON s.customer_id = cte.customer_id
-        AND s.order_date <= cte.last_date
-	JOIN menu AS m
-		ON m.product_id = s.product_id
-	GROUP BY s.customer_id;
+	SUM(CASE
+		WHEN m.product_name = 'sushi' THEN m.price * 10 * 2
+		WHEN s.order_date BETWEEN cte.join_date AND cte.first_week THEN m.price * 10 * 2
+		ELSE m.price * 10 END) AS points
+FROM sales AS s
+JOIN cte
+	ON s.customer_id = cte.customer_id
+	AND s.order_date <= cte.last_date
+JOIN menu AS m
+	ON m.product_id = s.product_id
+GROUP BY s.customer_id;
 ```
 | customer_id |  points  |
 | ----------- | -------- |
